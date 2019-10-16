@@ -1,23 +1,35 @@
 package io.github.cshadd.nodding_detection_android;
 
+import android.Manifest;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Point;
-import android.os.Build;
 import android.os.Bundle;
-import android.os.VibrationEffect;
 import android.os.Vibrator;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.View;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
-import com.google.android.material.floatingactionbutton.FloatingActionButton;
-import com.google.android.material.snackbar.Snackbar;
+import androidx.lifecycle.LifecycleOwner;
+import com.karumi.dexter.Dexter;
+import com.karumi.dexter.MultiplePermissionsReport;
+import com.karumi.dexter.PermissionToken;
+import com.karumi.dexter.listener.PermissionRequest;
+import com.karumi.dexter.listener.multi.MultiplePermissionsListener;
 
-public class MainActivity extends AppCompatActivity {
+import java.util.List;
+
+public class MainActivity extends AppCompatActivity
+        implements LifecycleOwner {
+    private static final String TAG = "NOGA";
+
+    private boolean cameraAllowed;
+    private CameraControl cameraControl;
+
     public MainActivity() {
         super();
+        this.cameraAllowed = false;
         return;
     }
 
@@ -34,15 +46,43 @@ public class MainActivity extends AppCompatActivity {
         final Toolbar toolbar = findViewById(R.id.toolbar);
         super.setSupportActionBar(toolbar);
 
-        final FloatingActionButton fab = findViewById(R.id.fab);
-        fab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
-                vibrate(500);
-            }
-        });
+        Dexter.withActivity(this)
+                .withPermissions(
+                        Manifest.permission.CAMERA
+                )
+                .withListener(new MultiplePermissionsListener() {
+                    private static final String TAG = "WIEGLY";
+
+                    @Override
+                    public void onPermissionsChecked(MultiplePermissionsReport report) {
+                        if (report.areAllPermissionsGranted()) {
+                            Log.i(TAG, "Needed permissions were granted!");
+                            cameraAllowed = true;
+                        }
+                        else {
+                            Log.w(TAG, "Needed permissions were not granted!");
+                            cameraAllowed = false;
+                        }
+                        return;
+                    }
+                    @Override
+                    public void onPermissionRationaleShouldBeShown(List<PermissionRequest> permissions, PermissionToken token) {
+                        return;
+                    }
+                }).check();
+
+        if (this.cameraAllowed) {
+            this.cameraControl = new CameraControl(this);
+            this.cameraControl.start();
+        }
+
+        Log.d(MainActivity.TAG, "I love nodding detection!");
+        return;
+    }
+
+    private void vibrate(int milliseconds) {
+        final Vibrator vibrator = (Vibrator)super.getSystemService(Context.VIBRATOR_SERVICE);
+        vibrator.vibrate(milliseconds);
         return;
     }
 
@@ -66,9 +106,10 @@ public class MainActivity extends AppCompatActivity {
         return super.onOptionsItemSelected(item);
     }
 
-    private void vibrate(int milliseconds) {
-        final Vibrator vibrator = (Vibrator)super.getSystemService(Context.VIBRATOR_SERVICE);
-        vibrator.vibrate(milliseconds);
+    @Override
+    protected void onStop() {
+        super.onStop();
+
         return;
     }
 }

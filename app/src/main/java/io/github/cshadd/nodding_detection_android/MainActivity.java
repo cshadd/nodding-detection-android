@@ -3,6 +3,7 @@ package io.github.cshadd.nodding_detection_android;
 import android.Manifest;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Canvas;
 import android.graphics.Point;
 import android.os.Bundle;
 import android.os.Vibrator;
@@ -109,7 +110,7 @@ public class MainActivity extends AppCompatActivity
     @Override
     protected void onStop() {
         super.onStop();
-
+        this.cameraControl.onStop();
         return;
     }
 }

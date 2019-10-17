@@ -20,6 +20,7 @@ public class CameraControl {
     private static final String TAG = "KAPLAN-1";
 
     private Activity activity;
+    private CameraAnalyzer cameraAnalyzer;
     private TextureView cameraPreview;
     private HandlerThread imageAnalysisHandlerThread;
 
@@ -32,6 +33,7 @@ public class CameraControl {
         super();
         this.activity = activity;
         if (this.activity != null) {
+            this.cameraAnalyzer = new CameraAnalyzer(activity);
             this.cameraPreview = (TextureView)this.activity.findViewById(R.id.camera_preview);
         }
         this.imageAnalysisHandlerThread = null;
@@ -40,6 +42,7 @@ public class CameraControl {
 
     public void onStop() {
         this.imageAnalysisHandlerThread.quitSafely();
+        this.cameraAnalyzer.onStop();
         return;
     }
 
@@ -87,7 +90,7 @@ public class CameraControl {
                 .build();
 
         final ImageAnalysis analyzerUseCase = new ImageAnalysis(analyzerConfig);
-        analyzerUseCase.setAnalyzer(new CameraAnalyzer(activity));
+        analyzerUseCase.setAnalyzer(this.cameraAnalyzer);
 
         CameraX.bindToLifecycle((LifecycleOwner) this.activity, preview, analyzerUseCase);
         return;

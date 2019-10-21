@@ -3,4 +3,9 @@
 
     <string name="action_close">Close</string>
     <string name="action_settings">Settings</string>
+    <string name="ask_move">Please move your head!</string>
+    <string name="ask_look">Please look at your front camera!</string>
+    <string name="dismiss">Dismiss</string>
+    <string name="error">An error occurred: %1$s</string>
+    <string name="no_front_camera">Unable to detect front camera!</string>
 </resources>

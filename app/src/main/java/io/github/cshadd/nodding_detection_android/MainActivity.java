@@ -163,7 +163,14 @@ public class MainActivity extends AppCompatActivity
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         final int id = item.getItemId();
-        if (id == R.id.action_close) {
+        if (id == R.id.action_clear) {
+            this.vibrate(300);
+            if (this.cameraControl != null) {
+                this.cameraControl.clearCapturedPosition();
+            }
+            return true;
+        }
+        else if (id == R.id.action_close) {
             this.vibrate(100);
             final Intent homeIntent = new Intent(Intent.ACTION_MAIN);
             homeIntent.addCategory( Intent.CATEGORY_HOME );

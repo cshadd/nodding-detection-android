@@ -176,14 +176,6 @@
                     android:text="@string/detail_position" />
             </LinearLayout>
 
-            <Button
-                android:id="@+id/clear_cap"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:layout_marginStart="15dp"
-                android:layout_marginEnd="15dp"
-                android:text="@string/clear_captured" />
-
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"

@@ -53,18 +53,21 @@ public class CameraControl {
         return;
     }
 
+    public void clearCapturedPosition() {
+        this.analyzer.clearCapturedPosition();
+        return;
+    }
+
     public void onCreate() throws Exception {
         if (CameraX.hasCameraWithLensFacing(CameraControl.LENS_FACING)) {
             if (this.activity != null) {
                 this.cameraPreviewView = (TextureView)this.activity.findViewById(R.id.camera_preview_view);
             }
-
             this.cameraPreviewViewRunnable = new Runnable() {
                 @Override
                 public void run() {
                     preview.setOnPreviewOutputUpdateListener(previewOutputUpdateListener);
                     analyzerUseCase.setAnalyzer(analyzer);
-                    CameraX.unbindAll();
                     CameraX.bindToLifecycle((LifecycleOwner)activity, analyzerUseCase, preview);
                 }
             };
@@ -105,6 +108,7 @@ public class CameraControl {
         this.cameraPreviewView.removeOnLayoutChangeListener(this.cameraPreviewViewLayoutChangeListener);
         this.cameraPreviewView.removeCallbacks(this.cameraPreviewViewRunnable);
         this.analyzerUseCase.removeAnalyzer();
+        CameraX.unbindAll();
         this.imageAnalysisHandlerThread.getLooper().quitSafely();
         this.imageAnalysisHandlerThread.quitSafely();
         return;

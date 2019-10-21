@@ -37,7 +37,6 @@ public class CameraControl {
     public CameraControl(final Activity activity) {
         super();
         this.activity = activity;
-        this.analyzer = new Analyzer(activity);
         this.imageAnalysisHandlerThread = new HandlerThread("Analyzer");
         this.imageAnalysisHandlerThread.start();
         final ImageAnalysisConfig analyzerConfig = new ImageAnalysisConfig.Builder()
@@ -87,6 +86,8 @@ public class CameraControl {
                 }
             };
 
+            this.analyzer = new Analyzer(activity);
+            this.analyzer.onCreate();
             this.analyzerUseCase.setAnalyzer(this.analyzer);
             this.cameraPreviewView.post(this.cameraPreviewViewRunnable);
             this.cameraPreviewView.addOnLayoutChangeListener(this.cameraPreviewViewLayoutChangeListener);

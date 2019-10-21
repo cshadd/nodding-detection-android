@@ -2,10 +2,13 @@ package io.github.cshadd.nodding_detection_android;
 
 import android.app.Activity;
 import android.content.Context;
-import android.graphics.Rect;
+import android.content.res.Resources;
 import android.media.Image;
 import android.os.Vibrator;
+import android.view.View;
+import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.TextView;
 import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.camera.core.ImageAnalysis;
@@ -19,6 +22,7 @@ import com.google.firebase.ml.vision.common.FirebaseVisionImageMetadata;
 import com.google.firebase.ml.vision.face.FirebaseVisionFace;
 import com.google.firebase.ml.vision.face.FirebaseVisionFaceDetector;
 import com.google.firebase.ml.vision.face.FirebaseVisionFaceDetectorOptions;
+import com.google.firebase.ml.vision.face.FirebaseVisionFaceLandmark;
 import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -28,9 +32,19 @@ public class Analyzer
     private static final String TAG = "KAPLAN-2";
 
     private Activity activity;
+    private TextView[] capPos;
+    private TextView[] capPosMid;
+    private boolean currentPosCaptured;
+    private CorrectedFirebaseVisionPointWrapper currentLeftEyePos;
+    private CorrectedFirebaseVisionPointWrapper currentMidpoint;
+    private CorrectedFirebaseVisionPointWrapper currentNoseBasePos;
+    private CorrectedFirebaseVisionPointWrapper currentRightEyePos;
     private FirebaseVisionFaceDetector detector;
     private boolean faceDetected;
     private long lastAnalyzedTimestamp;
+    private TextView[] pos;
+    private TextView[] posMid;
+    private Resources res;
     private ImageView smile;
 
     private Analyzer() {
@@ -41,6 +55,11 @@ public class Analyzer
     public Analyzer(Activity activity) {
         super();
         this.activity = activity;
+        this.currentPosCaptured = false;
+        this.currentLeftEyePos = new CorrectedFirebaseVisionPointWrapper(0f, 0f, 0f);
+        this.currentMidpoint = new CorrectedFirebaseVisionPointWrapper(0f, 0f, 0f);
+        this.currentNoseBasePos = new CorrectedFirebaseVisionPointWrapper(0f, 0f, 0f);
+        this.currentRightEyePos = new CorrectedFirebaseVisionPointWrapper(0f, 0f, 0f);
         this.faceDetected = false;
         final FirebaseVisionFaceDetectorOptions options =
                 new FirebaseVisionFaceDetectorOptions.Builder()
@@ -52,7 +71,37 @@ public class Analyzer
         this.detector = FirebaseVision.getInstance()
                 .getVisionFaceDetector(options);
         this.lastAnalyzedTimestamp = 0;
-        this.smile = (ImageView)this.activity.findViewById(R.id.smile);
+        return;
+    }
+
+    private void clearCurrentPositionCaptured() {
+        currentPosCaptured = false;
+
+        capPos[0].setText(res.getString(R.string.detail_position3,
+                "L. Eye X",  "~0",
+                "Nose X",  "~0",
+                "R. Eye X",  "~0"
+        ));
+        capPos[1].setText(res.getString(R.string.detail_position3,
+                "L. Eye Y",  "0",
+                "Nose Y",  "~0",
+                "R. Eye Y",  "~0"
+        ));
+        capPos[2].setText(res.getString(R.string.detail_position3,
+                "L. Eye Z: ",  "~0",
+                "Nose Z",  "~0",
+                "R. Eye Z",  "~0"
+        ));
+
+        capPosMid[0].setText(res.getString(R.string.detail_position,
+                "X",  "~0"
+        ));
+        capPosMid[1].setText(res.getString(R.string.detail_position,
+                "Y",  "~0"
+        ));
+        capPosMid[2].setText(res.getString(R.string.detail_position,
+                "Z",  "~0"
+        ));
         return;
     }
 
@@ -70,6 +119,51 @@ public class Analyzer
             return FirebaseVisionImageMetadata.ROTATION_270;
         }
         return -1;
+    }
+
+    private CorrectedFirebaseVisionPointWrapper firebaseVisionMidpoint(CorrectedFirebaseVisionPointWrapper p1,
+                                                                       CorrectedFirebaseVisionPointWrapper p2) {
+        float x = (p1.getX() + p2.getX()) / 2;
+        float y = (p1.getY() + p2.getY()) / 2;
+        float z = (p1.getZ() + p2.getZ()) / 2;
+        return new CorrectedFirebaseVisionPointWrapper(x, y, z);
+    }
+
+    public void onCreate() throws Exception {
+        this.capPos = new TextView[3];
+        this.capPos[0] = (TextView)this.activity.findViewById(R.id.cap_pos_x);
+        this.capPos[1] = (TextView)this.activity.findViewById(R.id.cap_pos_y);
+        this.capPos[2] = (TextView)this.activity.findViewById(R.id.cap_pos_z);
+
+        this.capPosMid = new TextView[3];
+        this.capPosMid[0] = (TextView)this.activity.findViewById(R.id.cap_pos_mid_x);
+        this.capPosMid[1] = (TextView)this.activity.findViewById(R.id.cap_pos_mid_y);
+        this.capPosMid[2] = (TextView)this.activity.findViewById(R.id.cap_pos_mid_z);
+
+        final Button clearCaptured = (Button)this.activity.findViewById(R.id.clear_cap);
+        clearCaptured.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                clearCurrentPositionCaptured();
+                vibrate(300);
+                return;
+            }
+        });
+
+        this.pos = new TextView[3];
+        this.pos[0] = (TextView)this.activity.findViewById(R.id.pos_x);
+        this.pos[1] = (TextView)this.activity.findViewById(R.id.pos_y);
+        this.pos[2] = (TextView)this.activity.findViewById(R.id.pos_z);
+
+        this.posMid = new TextView[3];
+        this.posMid[0] = (TextView)this.activity.findViewById(R.id.pos_mid_x);
+        this.posMid[1] = (TextView)this.activity.findViewById(R.id.pos_mid_y);
+        this.posMid[2] = (TextView)this.activity.findViewById(R.id.pos_mid_z);
+
+        this.res = this.activity.getResources();
+
+        this.smile = (ImageView)this.activity.findViewById(R.id.smile);
+        return;
     }
 
     public void onDestroy() throws IOException {
@@ -105,22 +199,106 @@ public class Analyzer
                                 .addOnSuccessListener(new OnSuccessListener<List<FirebaseVisionFace>>() {
                                             @Override
                                             public void onSuccess(List<FirebaseVisionFace> faces) {
-                                                // Log.i(CameraAnalyzer.TAG, "Faces: " + faces.size());
+                                                // Log.i(Analyzer.TAG, "Faces: " + faces.size());
                                                 if (faces.size() > 0) {
                                                     smile.setImageResource(R.drawable.smile_green);
                                                     if (!faceDetected) {
+                                                        Toast.makeText(activity, R.string.face_detected, Toast.LENGTH_SHORT)
+                                                                .show();
                                                         vibrate(500);
                                                         faceDetected = true;
-                                                        Toast.makeText(activity, R.string.ask_move, Toast.LENGTH_SHORT)
-                                                                .show();
                                                     }
                                                     final FirebaseVisionFace face = faces.get(0);
-                                                    final Rect bounds = face.getBoundingBox();
+                                                    // final Rect bounds = face.getBoundingBox();
+
+                                                    final FirebaseVisionFaceLandmark leftEye = face.getLandmark(FirebaseVisionFaceLandmark.LEFT_EYE);
+                                                    final FirebaseVisionFaceLandmark noseBase = face.getLandmark(FirebaseVisionFaceLandmark.NOSE_BASE);
+                                                    final FirebaseVisionFaceLandmark rightEye = face.getLandmark(FirebaseVisionFaceLandmark.RIGHT_EYE);
+
+                                                    final CorrectedFirebaseVisionPointWrapper leftEyePos =
+                                                            new CorrectedFirebaseVisionPointWrapper(leftEye.getPosition());
+                                                    final CorrectedFirebaseVisionPointWrapper noseBasePos =
+                                                            new CorrectedFirebaseVisionPointWrapper(noseBase.getPosition());
+                                                    final CorrectedFirebaseVisionPointWrapper rightEyePos =
+                                                            new CorrectedFirebaseVisionPointWrapper(rightEye.getPosition());
+
+                                                    final CorrectedFirebaseVisionPointWrapper eyesMidpoint = firebaseVisionMidpoint(leftEyePos, rightEyePos);
+                                                    final CorrectedFirebaseVisionPointWrapper eyesNoseMidpoint = firebaseVisionMidpoint(eyesMidpoint, noseBasePos);
+
+                                                    pos[0].setText(res.getString(R.string.detail_position3,
+                                                            "L. Eye X: ",  "~" + Math.floor(leftEyePos.getX()),
+                                                            "Nose X: ",  "~" + Math.floor(noseBasePos.getX()),
+                                                            "R. Eye X: ",  "~" + Math.floor(rightEyePos.getX())
+                                                    ));
+                                                    pos[1].setText(res.getString(R.string.detail_position3,
+                                                            "L. Eye Y",  "~" + Math.floor(leftEyePos.getY()),
+                                                            "Nose Y",  "~" + Math.floor(noseBasePos.getY()),
+                                                            "R. Eye Y",  "~" + Math.floor(rightEyePos.getY())
+                                                    ));
+                                                    pos[2].setText(res.getString(R.string.detail_position3,
+                                                            "L. Eye Z",  "~" + Math.floor(leftEyePos.getZ()),
+                                                            "Nose Z",  "~" + Math.floor(noseBasePos.getZ()),
+                                                            "R. Eye Z",  "~" + Math.floor(rightEyePos.getZ())
+                                                    ));
+
+                                                    posMid[0].setText(res.getString(R.string.detail_position,
+                                                            "X",  "~" + Math.floor(eyesNoseMidpoint.getX())
+                                                    ));
+                                                    posMid[1].setText(res.getString(R.string.detail_position,
+                                                            "Y",  "~" + Math.floor(eyesNoseMidpoint.getY())
+                                                    ));
+                                                    posMid[2].setText(res.getString(R.string.detail_position,
+                                                            "Z",  "~" + Math.floor(eyesNoseMidpoint.getZ())
+                                                    ));
+
+                                                    if (!currentPosCaptured) {
+                                                        currentLeftEyePos = leftEyePos;
+                                                        currentNoseBasePos = noseBasePos;
+                                                        currentRightEyePos = rightEyePos;
+                                                        currentMidpoint = eyesNoseMidpoint;
+
+                                                        capPos[0].setText(res.getString(R.string.detail_position3,
+                                                                "L. Eye X",  "~" + Math.floor(currentLeftEyePos.getX()),
+                                                                "Nose X",  "~" + Math.floor(currentNoseBasePos.getX()),
+                                                                "R. Eye X",  "~" + Math.floor(currentRightEyePos.getX())
+                                                        ));
+                                                        capPos[1].setText(res.getString(R.string.detail_position3,
+                                                                "L. Eye Y",  "~" + Math.floor(currentLeftEyePos.getY()),
+                                                                "Nose Y",  "~" + Math.floor(currentNoseBasePos.getY()),
+                                                                "R. Eye Y",  "~" + Math.floor(currentRightEyePos.getY())
+                                                        ));
+                                                        capPos[2].setText(res.getString(R.string.detail_position3,
+                                                                "L. Eye Z: ",  "~" + Math.floor(currentLeftEyePos.getZ()),
+                                                                "Nose Z",  "~" + Math.floor(currentNoseBasePos.getZ()),
+                                                                "R. Eye Z",  "~" + Math.floor(currentRightEyePos.getZ())
+                                                        ));
+
+                                                        capPosMid[0].setText(res.getString(R.string.detail_position,
+                                                                "X",  "~" + Math.floor(currentMidpoint.getX())
+                                                        ));
+                                                        capPosMid[1].setText(res.getString(R.string.detail_position,
+                                                                "Y",  "~" + Math.floor(currentMidpoint.getY())
+                                                        ));
+                                                        capPosMid[2].setText(res.getString(R.string.detail_position,
+                                                                "Z",  "~" + Math.floor(currentMidpoint.getZ())
+                                                        ));
+
+                                                        currentPosCaptured = true;
+                                                    }
+
+                                                    /*Log.i(Analyzer.TAG, "Results: "
+                                                            + "{Left Eye: " + leftEyePos
+                                                            + ", Nose Base: " + noseBasePos
+                                                            + ", Right Eye: " + rightEyePos + "}");
+                                                    Log.i(Analyzer.TAG, "Results (Midpoints): "
+                                                            + "{Eyes: " + eyesMidpoint
+                                                            + ", Eyes-Nose: " + eyesNoseMidpoint + "}");*/
                                                 }
                                                 else {
-                                                    smile.setImageResource(R.drawable.smile);
                                                     Toast.makeText(activity, R.string.ask_look, Toast.LENGTH_SHORT)
                                                             .show();
+                                                    clearCurrentPositionCaptured();
+                                                    smile.setImageResource(R.drawable.smile);
                                                     faceDetected = false;
                                                 }
                                                 return;

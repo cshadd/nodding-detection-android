@@ -13,10 +13,9 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.TextureView;
 import android.view.View;
-import android.widget.LinearLayout;
+import android.widget.ScrollView;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
-import androidx.camera.core.CameraX;
 import androidx.lifecycle.LifecycleOwner;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.snackbar.Snackbar;
@@ -33,19 +32,17 @@ public class MainActivity extends AppCompatActivity
 
     private boolean cameraAllowed;
     private CameraControl cameraControl;
-    private CameraX.LensFacing currentCameraFacing;
     private boolean isCameraPreviewVisible;
 
     public MainActivity() {
         super();
         this.cameraAllowed = false;
-        this.currentCameraFacing = CameraX.LensFacing.FRONT;
         this.isCameraPreviewVisible = false;
         return;
     }
 
     private void showError(String errorMessage) {
-        final Resources res = getResources();
+        final Resources res = super.getResources();
         final View contextView = (View)super.findViewById(R.id.main_view);
         final Snackbar snackBar = Snackbar.make(contextView,
                 res.getString(R.string.error, errorMessage), Snackbar.LENGTH_INDEFINITE);
@@ -135,7 +132,7 @@ public class MainActivity extends AppCompatActivity
         }
 
         final TextureView cameraPreviewView = (TextureView)super.findViewById(R.id.camera_preview_view);
-        final LinearLayout detailsView = (LinearLayout) super.findViewById(R.id.detail_view);
+        final ScrollView detailsView = (ScrollView)super.findViewById(R.id.detail_view);
 
         final FloatingActionButton fab = (FloatingActionButton)super.findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {

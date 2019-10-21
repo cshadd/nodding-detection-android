@@ -13,7 +13,7 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_weight="1"
-        android:background="@drawable/back">
+        android:background="@drawable/simple_border">
 
         <ImageView
             android:id="@+id/left_arrow"
@@ -68,8 +68,8 @@
 
         <ImageView
             android:id="@+id/smile"
-            android:layout_width="162dp"
-            android:layout_height="131dp"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
             android:contentDescription="@string/img_smile_desc"
             app:layout_constraintBottom_toTopOf="@+id/bottom_arrow"
             app:layout_constraintEnd_toStartOf="@+id/right_arrow"
@@ -79,12 +79,200 @@
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
-    <LinearLayout
+    <ScrollView
         android:id="@+id/detail_view"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:layout_marginTop="10dp"
         android:layout_weight="1"
-        android:orientation="vertical"/>
+        android:orientation="horizontal">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="15dp"
+                android:layout_marginEnd="15dp"
+                android:background="@color/colorPositionTitle"
+                android:text="@string/detail_captured_position_title" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_marginStart="15dp"
+                android:layout_marginEnd="15dp"
+                android:layout_marginBottom="10dp"
+                android:background="@drawable/simple_border"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:id="@+id/cap_pos_x"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:background="@color/colorPosition"
+                    android:text="@string/detail_position3" />
+
+                <TextView
+                    android:id="@+id/cap_pos_y"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:background="@color/colorPosition"
+                    android:text="@string/detail_position3" />
+
+                <TextView
+                    android:id="@+id/cap_pos_z"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:background="@color/colorPosition"
+                    android:text="@string/detail_position3" />
+            </LinearLayout>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="15dp"
+                android:layout_marginEnd="15dp"
+                android:background="@color/colorPositionTitle"
+                android:text="@string/detail_captured_midpoint_title" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_marginStart="15dp"
+                android:layout_marginEnd="15dp"
+                android:layout_marginBottom="10dp"
+                android:background="@drawable/simple_border"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:id="@+id/cap_pos_mid_x"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:background="@color/colorPosition"
+                    android:text="@string/detail_position" />
+
+                <TextView
+                    android:id="@+id/cap_pos_mid_y"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:background="@color/colorPosition"
+                    android:text="@string/detail_position" />
+
+                <TextView
+                    android:id="@+id/cap_pos_mid_z"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:background="@color/colorPosition"
+                    android:text="@string/detail_position" />
+            </LinearLayout>
+
+            <Button
+                android:id="@+id/clear_cap"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_marginStart="15dp"
+                android:layout_marginEnd="15dp"
+                android:text="@string/clear_captured" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="15dp"
+                android:layout_marginEnd="15dp"
+                android:background="@color/colorPositionTitle"
+                android:text="@string/detail_current_position_title" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_marginStart="15dp"
+                android:layout_marginEnd="15dp"
+                android:layout_marginBottom="10dp"
+                android:background="@drawable/simple_border"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:id="@+id/pos_x"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:background="@color/colorPosition"
+                    android:text="@string/detail_position3" />
+
+                <TextView
+                    android:id="@+id/pos_y"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:background="@color/colorPosition"
+                    android:text="@string/detail_position3" />
+
+                <TextView
+                    android:id="@+id/pos_z"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:background="@color/colorPosition"
+                    android:text="@string/detail_position3" />
+            </LinearLayout>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="15dp"
+                android:layout_marginEnd="15dp"
+                android:background="@color/colorPositionTitle"
+                android:text="@string/detail_current_midpoints_title" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_marginStart="15dp"
+                android:layout_marginEnd="15dp"
+                android:layout_marginBottom="10dp"
+                android:background="@drawable/simple_border"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:id="@+id/pos_mid_x"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:background="@color/colorPosition"
+                    android:text="@string/detail_position" />
+
+                <TextView
+                    android:id="@+id/pos_mid_y"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:background="@color/colorPosition"
+                    android:text="@string/detail_position" />
+
+                <TextView
+                    android:id="@+id/pos_mid_z"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:background="@color/colorPosition"
+                    android:text="@string/detail_position" />
+            </LinearLayout>
+            <androidx.legacy.widget.Space
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_marginBottom="200dp" />
+        </LinearLayout>
+    </ScrollView>
 
     <TextureView
         android:id="@+id/camera_preview_view"

@@ -1,13 +1,20 @@
 <resources>
     <string name="app_name">Nodding-Detection-Android</string>
+    <string name="title_activity_main">Nodding Detection</string>
     <string name="action_close">Close</string>
     <string name="action_settings">Settings</string>
-    <string name="ask_move">Please move your head!</string>
     <string name="ask_look">Please look at your front camera!</string>
+    <string name="clear_captured">Clear Captured Position</string>
+    <string name="detail_captured_position_title">Captured Position:</string>
+    <string name="detail_captured_midpoint_title">Captured Midpoint:</string>
+    <string name="detail_current_position_title">Current Position:</string>
+    <string name="detail_current_midpoints_title">Current Midpoint:</string>
+    <string name="detail_position">%1$s: %2$s</string>
+    <string name="detail_position3">%1$s: %2$s\n%3$s: %4$s\n%5$s: %6$s</string>
     <string name="dismiss">Dismiss</string>
     <string name="error">An error occurred: %1$s</string>
+    <string name="face_detected">Face detected!</string>
     <string name="no_front_camera">Unable to detect front camera!</string>
     <string name="img_arrow_desc">Nod Arrow</string>
-    <string name="img_smile_desc">Nod Arrow</string>
-    <string name="title_activity_main2">Main2Activity</string>
+    <string name="img_smile_desc">Smiling Face</string>
 </resources>

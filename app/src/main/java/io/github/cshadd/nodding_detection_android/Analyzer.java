@@ -30,8 +30,13 @@ import java.util.concurrent.TimeUnit;
 public class Analyzer
         implements ImageAnalysis.Analyzer {
     private static final String TAG = "KAPLAN-2";
+    private static final Float THRESHOLD = 50f;
 
     private Activity activity;
+    private ImageView arrowBottom;
+    private ImageView arrowLeft;
+    private ImageView arrowRight;
+    private ImageView arrowTop;
     private TextView[] capPos;
     private TextView[] capPosMid;
     private boolean currentPosCaptured;
@@ -74,8 +79,12 @@ public class Analyzer
         return;
     }
 
-    private void clearCurrentPositionCaptured() {
-        currentPosCaptured = false;
+    private void clearCapturedPosition() {
+        this.currentPosCaptured = false;
+        this.currentLeftEyePos = new CorrectedFirebaseVisionPointWrapper(0f, 0f, 0f);
+        this.currentMidpoint = new CorrectedFirebaseVisionPointWrapper(0f, 0f, 0f);
+        this.currentNoseBasePos = new CorrectedFirebaseVisionPointWrapper(0f, 0f, 0f);
+        this.currentRightEyePos = new CorrectedFirebaseVisionPointWrapper(0f, 0f, 0f);
 
         capPos[0].setText(res.getString(R.string.detail_position3,
                 "L. Eye X",  "~0",
@@ -130,6 +139,13 @@ public class Analyzer
     }
 
     public void onCreate() throws Exception {
+        this.res = this.activity.getResources();
+
+        this.arrowBottom = (ImageView)this.activity.findViewById(R.id.arrow_bottom);
+        this.arrowLeft = (ImageView)this.activity.findViewById(R.id.arrow_left);
+        this.arrowRight = (ImageView)this.activity.findViewById(R.id.arrow_right);
+        this.arrowTop = (ImageView)this.activity.findViewById(R.id.arrow_top);
+
         this.capPos = new TextView[3];
         this.capPos[0] = (TextView)this.activity.findViewById(R.id.cap_pos_x);
         this.capPos[1] = (TextView)this.activity.findViewById(R.id.cap_pos_y);
@@ -144,7 +160,7 @@ public class Analyzer
         clearCaptured.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                clearCurrentPositionCaptured();
+                clearCapturedPosition();
                 vibrate(300);
                 return;
             }
@@ -155,12 +171,36 @@ public class Analyzer
         this.pos[1] = (TextView)this.activity.findViewById(R.id.pos_y);
         this.pos[2] = (TextView)this.activity.findViewById(R.id.pos_z);
 
+        pos[0].setText(res.getString(R.string.detail_position3,
+                "L. Eye X",  "~0",
+                "Nose X",  "~0",
+                "R. Eye X",  "~0"
+        ));
+        pos[1].setText(res.getString(R.string.detail_position3,
+                "L. Eye Y",  "0",
+                "Nose Y",  "~0",
+                "R. Eye Y",  "~0"
+        ));
+        pos[2].setText(res.getString(R.string.detail_position3,
+                "L. Eye Z: ",  "~0",
+                "Nose Z",  "~0",
+                "R. Eye Z",  "~0"
+        ));
+
         this.posMid = new TextView[3];
         this.posMid[0] = (TextView)this.activity.findViewById(R.id.pos_mid_x);
         this.posMid[1] = (TextView)this.activity.findViewById(R.id.pos_mid_y);
         this.posMid[2] = (TextView)this.activity.findViewById(R.id.pos_mid_z);
 
-        this.res = this.activity.getResources();
+        posMid[0].setText(res.getString(R.string.detail_position,
+                "X",  "~0"
+        ));
+        posMid[1].setText(res.getString(R.string.detail_position,
+                "Y",  "~0"
+        ));
+        posMid[2].setText(res.getString(R.string.detail_position,
+                "Z",  "~0"
+        ));
 
         this.smile = (ImageView)this.activity.findViewById(R.id.smile);
         return;
@@ -286,6 +326,32 @@ public class Analyzer
                                                         currentPosCaptured = true;
                                                     }
 
+                                                    if (currentMidpoint.getX() - eyesNoseMidpoint.getX() < -THRESHOLD) {
+                                                        arrowLeft.setImageResource(R.drawable.arrow_green);
+                                                        arrowRight.setImageResource(R.drawable.arrow);
+                                                    }
+                                                    else if (currentMidpoint.getX() - eyesNoseMidpoint.getX() > THRESHOLD) {
+                                                        arrowLeft.setImageResource(R.drawable.arrow);
+                                                        arrowRight.setImageResource(R.drawable.arrow_green);
+                                                    }
+                                                    else {
+                                                        arrowLeft.setImageResource(R.drawable.arrow);
+                                                        arrowRight.setImageResource(R.drawable.arrow);
+                                                    }
+
+                                                    if (currentMidpoint.getY() - eyesNoseMidpoint.getY() < -THRESHOLD) {
+                                                        arrowBottom.setImageResource(R.drawable.arrow_green);
+                                                        arrowTop.setImageResource(R.drawable.arrow);
+                                                    }
+                                                    else if (currentMidpoint.getY() - eyesNoseMidpoint.getY() > THRESHOLD) {
+                                                        arrowBottom.setImageResource(R.drawable.arrow);
+                                                        arrowTop.setImageResource(R.drawable.arrow_green);
+                                                    }
+                                                    else {
+                                                        arrowBottom.setImageResource(R.drawable.arrow);
+                                                        arrowTop.setImageResource(R.drawable.arrow);
+                                                    }
+
                                                     /*Log.i(Analyzer.TAG, "Results: "
                                                             + "{Left Eye: " + leftEyePos
                                                             + ", Nose Base: " + noseBasePos
@@ -297,7 +363,11 @@ public class Analyzer
                                                 else {
                                                     Toast.makeText(activity, R.string.ask_look, Toast.LENGTH_SHORT)
                                                             .show();
-                                                    clearCurrentPositionCaptured();
+                                                    clearCapturedPosition();
+                                                    arrowBottom.setImageResource(R.drawable.arrow);
+                                                    arrowLeft.setImageResource(R.drawable.arrow);
+                                                    arrowRight.setImageResource(R.drawable.arrow);
+                                                    arrowTop.setImageResource(R.drawable.arrow);
                                                     smile.setImageResource(R.drawable.smile);
                                                     faceDetected = false;
                                                 }

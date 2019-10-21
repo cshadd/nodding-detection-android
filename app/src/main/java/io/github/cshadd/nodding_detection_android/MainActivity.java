@@ -3,56 +3,35 @@ package io.github.cshadd.nodding_detection_android;
 import android.Manifest;
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
-import android.content.Context;
 import android.content.Intent;
-import android.content.res.Resources;
 import android.os.Bundle;
-import android.os.Vibrator;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.TextureView;
 import android.view.View;
-import android.widget.ScrollView;
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
-import androidx.lifecycle.LifecycleOwner;
+import androidx.constraintlayout.widget.ConstraintLayout;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
-import com.google.android.material.snackbar.Snackbar;
 import com.karumi.dexter.Dexter;
 import com.karumi.dexter.MultiplePermissionsReport;
 import com.karumi.dexter.PermissionToken;
 import com.karumi.dexter.listener.PermissionRequest;
 import com.karumi.dexter.listener.multi.MultiplePermissionsListener;
+import com.otaliastudios.cameraview.CameraView;
 import java.util.List;
 
-public class MainActivity extends AppCompatActivity
-        implements LifecycleOwner {
+public class MainActivity
+        extends CommonActivity {
     private static final String TAG = "NOGA";
 
     private boolean cameraAllowed;
     private CameraControl cameraControl;
-    private boolean isCameraPreviewVisible;
+    private int cameraPreviewVisible;
 
     public MainActivity() {
         super();
         this.cameraAllowed = false;
-        this.isCameraPreviewVisible = false;
-        return;
-    }
-
-    private void showError(String errorMessage) {
-        final Resources res = super.getResources();
-        final View contextView = (View)super.findViewById(R.id.main_view);
-        final Snackbar snackBar = Snackbar.make(contextView,
-                res.getString(R.string.error, errorMessage), Snackbar.LENGTH_INDEFINITE);
-        snackBar.setAction(R.string.dismiss, new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                snackBar.dismiss();
-            }
-        });
-        snackBar.show();
+        this.cameraPreviewVisible = -1;
         return;
     }
 
@@ -78,13 +57,6 @@ public class MainActivity extends AppCompatActivity
                         return;
                     }
                 });
-    }
-
-    private void vibrate(int milliseconds) {
-        final Vibrator vibrator = (Vibrator)super.getSystemService(Context.VIBRATOR_SERVICE);
-        if (vibrator != null) {
-            vibrator.vibrate(milliseconds);
-        }
         return;
     }
 
@@ -97,7 +69,8 @@ public class MainActivity extends AppCompatActivity
 
         Dexter.withActivity(this)
                 .withPermissions(
-                        Manifest.permission.CAMERA
+                        Manifest.permission.CAMERA,
+                        Manifest.permission.RECORD_AUDIO
                 )
                 .withListener(new MultiplePermissionsListener() {
                     private static final String TAG = "WIEGLY";
@@ -122,29 +95,24 @@ public class MainActivity extends AppCompatActivity
 
         if (this.cameraAllowed) {
             this.cameraControl = new CameraControl(this);
-            try {
-                this.cameraControl.onCreate();
-            }
-            catch (Exception e) {
-                Log.e(MainActivity.TAG, e.toString());
-                e.printStackTrace();
-            }
+            this.cameraControl.onCreate();
         }
 
-        final TextureView cameraPreviewView = (TextureView)super.findViewById(R.id.camera_preview_view);
-        final ScrollView detailsView = (ScrollView)super.findViewById(R.id.detail_view);
+        final CameraView cameraPreviewView = (CameraView)super.findViewById(R.id.camera_preview_view);
+        this.cameraPreviewVisible = cameraPreviewView.getVisibility();
+        final ConstraintLayout detailsView = (ConstraintLayout)super.findViewById(R.id.detail_view);
 
         final FloatingActionButton fabLeft = (FloatingActionButton)super.findViewById(R.id.fab_left);
         fabLeft.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                if (isCameraPreviewVisible) {
+                if (cameraPreviewVisible == View.VISIBLE) {
                     swapViewsAnimated(cameraPreviewView, detailsView);
-                    isCameraPreviewVisible = false;
+                    cameraPreviewVisible = View.GONE;
                 }
                 else {
                     swapViewsAnimated(detailsView, cameraPreviewView);
-                    isCameraPreviewVisible = true;
+                    cameraPreviewVisible = View.VISIBLE;
                 }
                 vibrate(300);
                 return;
@@ -155,13 +123,7 @@ public class MainActivity extends AppCompatActivity
         fabRight.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                try {
-                    cameraControl.swapLens();
-                }
-                catch (Exception e) {
-                    Log.e(MainActivity.TAG, e.toString());
-                    e.printStackTrace();
-                }
+                cameraControl.swapLens();
                 vibrate(300);
                 return;
             }
@@ -181,14 +143,28 @@ public class MainActivity extends AppCompatActivity
     public boolean onOptionsItemSelected(MenuItem item) {
         final int id = item.getItemId();
         if (id == R.id.action_clear) {
-            this.vibrate(300);
+            if (this.cameraControl != null) {
+                this.cameraControl.clearPosition();
+            }
+            super.vibrate(300);
+            return true;
+        }
+        else if (id == R.id.action_clear_cap) {
             if (this.cameraControl != null) {
                 this.cameraControl.clearCapturedPosition();
             }
+            super.vibrate(300);
+            return true;
+        }
+        else if (id == R.id.action_clear_status) {
+            if (this.cameraControl != null) {
+                this.cameraControl.clearStatus();
+            }
+            super.vibrate(300);
             return true;
         }
         else if (id == R.id.action_close) {
-            this.vibrate(100);
+            super.vibrate(100);
             final Intent homeIntent = new Intent(Intent.ACTION_MAIN);
             homeIntent.addCategory( Intent.CATEGORY_HOME );
             homeIntent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
@@ -208,7 +184,7 @@ public class MainActivity extends AppCompatActivity
             catch (Exception e) {
                 Log.e(MainActivity.TAG, e.toString());
                 e.printStackTrace();
-                this.showError(e.getMessage());
+                super.showError(e.getMessage());
             }
         }
         return;

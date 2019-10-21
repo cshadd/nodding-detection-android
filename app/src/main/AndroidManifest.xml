@@ -3,6 +3,7 @@
     package="io.github.cshadd.nodding_detection_android">
 
     <uses-permission android:name="android.permission.CAMERA" />
+    <uses-permission android:name="android.permission.RECORD_AUDIO"/>
     <uses-permission android:name="android.permission.VIBRATE" />
 
     <application

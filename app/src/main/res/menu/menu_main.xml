@@ -5,7 +5,15 @@
     <item
         android:id="@+id/action_clear"
         android:icon="@android:drawable/ic_menu_delete"
-        android:title="@string/clear_captured" />
+        android:title="@string/clear" />
+    <item
+    android:id="@+id/action_clear_cap"
+    android:icon="@android:drawable/ic_menu_delete"
+    android:title="@string/clear_captured" />
+    <item
+        android:id="@+id/action_clear_status"
+        android:icon="@android:drawable/ic_menu_delete"
+        android:title="@string/clear_status" />
     <item
         android:id="@+id/action_close"
         android:icon="@android:drawable/ic_menu_close_clear_cancel"

@@ -10,10 +10,12 @@
     tools:showIn="@layout/activity_main">
 
     <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/detail_view"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_weight="1"
-        android:background="@drawable/simple_border">
+        android:background="@drawable/simple_border"
+        android:visibility="gone">
 
         <ImageView
             android:id="@+id/arrow_bottom"
@@ -79,8 +81,13 @@
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
+    <com.otaliastudios.cameraview.CameraView
+        android:id="@+id/camera_preview_view"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_weight="1" />
+
     <ScrollView
-        android:id="@+id/detail_view"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_marginTop="10dp"
@@ -267,18 +274,12 @@
                     android:background="@color/colorPosition"
                     android:text="@string/detail_position" />
             </LinearLayout>
+
             <androidx.legacy.widget.Space
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:layout_marginBottom="200dp" />
         </LinearLayout>
     </ScrollView>
-
-    <TextureView
-        android:id="@+id/camera_preview_view"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_weight="1"
-        android:visibility="gone" />
 
 </LinearLayout>

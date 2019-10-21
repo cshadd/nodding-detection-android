@@ -1,45 +1,32 @@
 package io.github.cshadd.nodding_detection_android;
 
-import android.app.Activity;
-import android.graphics.Matrix;
-import android.os.Handler;
-import android.os.HandlerThread;
-import android.view.Surface;
-import android.view.TextureView;
-import android.view.View;
-import android.view.ViewGroup;
-import androidx.camera.core.CameraX;
-import androidx.camera.core.ImageAnalysis;
-import androidx.camera.core.ImageAnalysisConfig;
-import androidx.camera.core.Preview;
-import androidx.camera.core.PreviewConfig;
-import androidx.lifecycle.LifecycleOwner;
+import com.google.firebase.ml.vision.common.FirebaseVisionImage;
+import com.google.firebase.ml.vision.common.FirebaseVisionImageMetadata;
+import com.otaliastudios.cameraview.CameraView;
+import com.otaliastudios.cameraview.controls.Facing;
+import com.otaliastudios.cameraview.frame.Frame;
+import com.otaliastudios.cameraview.frame.FrameProcessor;
+import com.otaliastudios.cameraview.size.Size;
 import java.io.IOException;
 
 public class CameraControl {
     private static final String TAG = "KAPLAN-1";
 
-    private Activity activity;
+    private CommonActivity activity;
     private Analyzer analyzer;
-    private ImageAnalysis analyzerUseCase;
-    private TextureView cameraPreviewView;
-    private CameraX.LensFacing currentLensFacing;
-    private View.OnLayoutChangeListener cameraPreviewViewLayoutChangeListener;
-    private Runnable cameraPreviewViewRunnable;
-    private HandlerThread imageAnalysisHandlerThread;
-    private Preview preview;
-    private Preview.OnPreviewOutputUpdateListener previewOutputUpdateListener;
+    private CameraView cameraPreviewView;
+    private Facing currentLensFacing;
+    private FrameProcessor frameProcessor;
 
     private CameraControl() {
         this(null);
         return;
     }
 
-    public CameraControl(Activity activity) {
+    public CameraControl(CommonActivity activity) {
         super();
         this.activity = activity;
-        this.currentLensFacing = CameraX.LensFacing.FRONT;
-        this.imageAnalysisHandlerThread = new HandlerThread("Analyzer");
+        this.currentLensFacing = Facing.FRONT;
         return;
     }
 
@@ -48,131 +35,71 @@ public class CameraControl {
         return;
     }
 
-    public void onCreate() throws Exception {
+    public void clearPosition() {
+        this.analyzer.clearPosition();
+        return;
+    }
+
+    public void clearStatus() {
+        this.analyzer.clearStatus();
+        return;
+    }
+
+    private FirebaseVisionImageMetadata extractFrameMetadata(Frame frame) {
+        return new FirebaseVisionImageMetadata.Builder()
+                .setWidth(frame.getSize().getWidth())
+                .setHeight(frame.getSize().getHeight())
+                .setFormat(frame.getFormat())
+                .setRotation(frame.getRotation() / 90)
+                .build();
+    }
+
+    public void onCreate() {
         this.analyzer = new Analyzer(activity);
         this.analyzer.onCreate();
-        this.cameraPreviewView = (TextureView)this.activity.findViewById(R.id.camera_preview_view);
-        this.imageAnalysisHandlerThread.start();
+        this.cameraPreviewView = (CameraView)this.activity.findViewById(R.id.camera_preview_view);
         this.setupCamera(this.currentLensFacing);
         return;
     }
 
     public void onDestroy() throws IOException {
         this.analyzer.onDestroy();
-        this.preview.removePreviewOutputListener();
-        this.cameraPreviewView.removeOnLayoutChangeListener(this.cameraPreviewViewLayoutChangeListener);
-        this.cameraPreviewView.removeCallbacks(this.cameraPreviewViewRunnable);
-        this.analyzerUseCase.removeAnalyzer();
-        CameraX.unbindAll();
-        this.imageAnalysisHandlerThread.getLooper().quitSafely();
-        this.imageAnalysisHandlerThread.quitSafely();
+        this.cameraPreviewView.removeFrameProcessor(this.frameProcessor);
         return;
     }
 
-    private void setupCamera(CameraX.LensFacing lensFacing) throws Exception {
-        if (CameraX.hasCameraWithLensFacing(lensFacing)) {
-            final ImageAnalysisConfig analyzerConfig = new ImageAnalysisConfig.Builder()
-                    .setCallbackHandler(new Handler(this.imageAnalysisHandlerThread.getLooper()))
-                    .setLensFacing(lensFacing)
-                    .setImageReaderMode(ImageAnalysis.ImageReaderMode.ACQUIRE_NEXT_IMAGE)
-                    .build();
-            if (this.analyzerUseCase != null) {
-                this.analyzerUseCase.removeAnalyzer();
+    private void setupCamera(Facing lensFacing) {
+        this.cameraPreviewView.removeFrameProcessor(this.frameProcessor);
+        this.cameraPreviewView.setFacing(lensFacing);
+        this.cameraPreviewView.setLifecycleOwner(this.activity);
+
+        this.frameProcessor = new FrameProcessor() {
+            @Override
+            public void process(Frame frame) {
+                final byte[] data = frame.getData();
+                final int format = frame.getFormat();
+                final int rotation = frame.getRotation();
+                final Size size = frame.getSize();
+                final long time = frame.getTime();
+
+                final FirebaseVisionImage image = FirebaseVisionImage.fromByteArray(data, extractFrameMetadata(frame));
+                analyzer.analyze(image);
+                return;
             }
-            this.analyzerUseCase = new ImageAnalysis(analyzerConfig);
+        };
 
-            if (this.preview != null
-                    && this.previewOutputUpdateListener != null) {
-                preview.removePreviewOutputListener();
-            }
-            this.preview = new Preview(new PreviewConfig.Builder()
-                    .setLensFacing(lensFacing)
-                    .build());
-
-            if (this.cameraPreviewView != null) {
-                if (this.cameraPreviewViewLayoutChangeListener != null) {
-                    this.cameraPreviewView.removeOnLayoutChangeListener(this.cameraPreviewViewLayoutChangeListener);
-                }
-
-                if (this.cameraPreviewViewRunnable != null) {
-                    this.cameraPreviewView.removeCallbacks(this.cameraPreviewViewRunnable);
-                }
-            }
-
-            this.previewOutputUpdateListener = new Preview.OnPreviewOutputUpdateListener() {
-                @Override
-                public void onUpdated(Preview.PreviewOutput previewOutput) {
-                    final ViewGroup parent = (ViewGroup)cameraPreviewView.getParent();
-                    parent.removeView(cameraPreviewView);
-                    cameraPreviewView.setSurfaceTexture(previewOutput.getSurfaceTexture());
-                    parent.addView(cameraPreviewView);
-                    updateTransform(cameraPreviewView);
-                    return;
-                }
-            };
-
-            this.cameraPreviewViewRunnable = new Runnable() {
-                @Override
-                public void run() {
-                    CameraX.unbindAll();
-                    preview.setOnPreviewOutputUpdateListener(previewOutputUpdateListener);
-                    analyzerUseCase.setAnalyzer(analyzer);
-                    CameraX.bindToLifecycle((LifecycleOwner)activity, analyzerUseCase, preview);
-                    return;
-                }
-            };
-
-            this.cameraPreviewViewLayoutChangeListener = new View.OnLayoutChangeListener() {
-                @Override
-                public void onLayoutChange(View view, int i, int i1, int i2, int i3, int i4, int i5, int i6, int i7) {
-                    updateTransform(cameraPreviewView);
-                    return;
-                }
-            };
-
-            this.cameraPreviewView.addOnLayoutChangeListener(this.cameraPreviewViewLayoutChangeListener);
-            this.cameraPreviewView.post(this.cameraPreviewViewRunnable);
-        }
-        else {
-            throw new Exception("No lens called " + lensFacing + "!");
-        }
+        this.cameraPreviewView.addFrameProcessor(this.frameProcessor);
     }
 
-    public void swapLens() throws Exception {
-        if (this.currentLensFacing == CameraX.LensFacing.BACK) {
-            this.currentLensFacing = CameraX.LensFacing.FRONT;
+    public void swapLens() {
+        if (this.currentLensFacing == Facing.BACK) {
+            this.currentLensFacing = Facing.FRONT;
         }
         else {
-            this.currentLensFacing = CameraX.LensFacing.BACK;
+            this.currentLensFacing = Facing.BACK;
         }
         this.setupCamera(this.currentLensFacing);
         this.analyzer.swapLens();
-        return;
-    }
-
-    private void updateTransform(TextureView view) {
-        if (view != null) {
-            final Matrix matrix = new Matrix();
-            final float centerX = view.getWidth() / 2f;
-            final float centerY = view.getHeight() / 2f;
-            final int rawRot = view.getDisplay().getRotation();
-
-            int rotation = 0;
-            if (rawRot == Surface.ROTATION_0) {
-                rotation = 0;
-            } else if (rawRot == Surface.ROTATION_90) {
-                rotation = 90;
-            } else if (rawRot == Surface.ROTATION_180) {
-                rotation = 180;
-            } else if (rawRot == Surface.ROTATION_270) {
-                rotation = 270;
-            } else {
-                return;
-            }
-
-            matrix.postRotate(-rotation, centerX, centerY);
-            view.setTransform(matrix);
-        }
         return;
     }
 }

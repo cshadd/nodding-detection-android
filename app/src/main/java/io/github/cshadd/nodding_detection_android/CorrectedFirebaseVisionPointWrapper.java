@@ -1,7 +1,7 @@
 package io.github.cshadd.nodding_detection_android;
 
 import com.google.android.gms.common.internal.Objects;
-import com.google.android.gms.internal.firebase_ml.zzlg;
+import com.google.android.gms.internal.firebase_ml.zzlq;
 import com.google.firebase.ml.vision.common.FirebaseVisionPoint;
 
 public final class CorrectedFirebaseVisionPointWrapper {
@@ -60,6 +60,6 @@ public final class CorrectedFirebaseVisionPointWrapper {
 
     @Override
     public final String toString() {
-        return zzlg.zzaw("FirebaseVisionPoint (Corrected)").zzh("x", this.getX()).zzh("y", this.getY()).zzh("z", this.getZ()).toString();
+        return zzlq.zzay("FirebaseVisionPoint (Corrected)").zzh("x", this.getX()).zzh("y", this.getY()).zzh("z", this.getZ()).toString();
     }
 }

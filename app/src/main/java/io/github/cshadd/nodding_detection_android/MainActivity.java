@@ -134,8 +134,8 @@ public class MainActivity extends AppCompatActivity
         final TextureView cameraPreviewView = (TextureView)super.findViewById(R.id.camera_preview_view);
         final ScrollView detailsView = (ScrollView)super.findViewById(R.id.detail_view);
 
-        final FloatingActionButton fab = (FloatingActionButton)super.findViewById(R.id.fab);
-        fab.setOnClickListener(new View.OnClickListener() {
+        final FloatingActionButton fabLeft = (FloatingActionButton)super.findViewById(R.id.fab_left);
+        fabLeft.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 if (isCameraPreviewVisible) {
@@ -147,6 +147,23 @@ public class MainActivity extends AppCompatActivity
                     isCameraPreviewVisible = true;
                 }
                 vibrate(300);
+                return;
+            }
+        });
+
+        final FloatingActionButton fabRight = (FloatingActionButton)super.findViewById(R.id.fab_right);
+        fabRight.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                try {
+                    cameraControl.swapLens();
+                }
+                catch (Exception e) {
+                    Log.e(MainActivity.TAG, e.toString());
+                    e.printStackTrace();
+                }
+                vibrate(300);
+                return;
             }
         });
 

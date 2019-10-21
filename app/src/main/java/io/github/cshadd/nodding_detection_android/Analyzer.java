@@ -11,6 +11,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 import androidx.annotation.NonNull;
+import androidx.camera.core.CameraX;
 import androidx.camera.core.ImageAnalysis;
 import androidx.camera.core.ImageProxy;
 import com.google.android.gms.tasks.OnFailureListener;
@@ -41,6 +42,7 @@ public class Analyzer
     private TextView[] capPosMid;
     private boolean currentPosCaptured;
     private CorrectedFirebaseVisionPointWrapper currentLeftEyePos;
+    private CameraX.LensFacing currentLensFacing;
     private CorrectedFirebaseVisionPointWrapper currentMidpoint;
     private CorrectedFirebaseVisionPointWrapper currentNoseBasePos;
     private CorrectedFirebaseVisionPointWrapper currentRightEyePos;
@@ -58,10 +60,16 @@ public class Analyzer
     }
 
     public Analyzer(Activity activity) {
+        this(activity, CameraX.LensFacing.FRONT);
+        return;
+    }
+
+    public Analyzer(Activity activity, CameraX.LensFacing lensFacing) {
         super();
         this.activity = activity;
         this.currentPosCaptured = false;
         this.currentLeftEyePos = new CorrectedFirebaseVisionPointWrapper(0f, 0f, 0f);
+        this.currentLensFacing = lensFacing;
         this.currentMidpoint = new CorrectedFirebaseVisionPointWrapper(0f, 0f, 0f);
         this.currentNoseBasePos = new CorrectedFirebaseVisionPointWrapper(0f, 0f, 0f);
         this.currentRightEyePos = new CorrectedFirebaseVisionPointWrapper(0f, 0f, 0f);
@@ -168,7 +176,7 @@ public class Analyzer
         return new CorrectedFirebaseVisionPointWrapper(x, y, z);
     }
 
-    public void onCreate() throws Exception {
+    public void onCreate() {
         this.res = this.activity.getResources();
 
         this.arrowBottom = (ImageView)this.activity.findViewById(R.id.arrow_bottom);
@@ -204,6 +212,16 @@ public class Analyzer
 
     public void onDestroy() throws IOException {
         this.detector.close();
+        return;
+    }
+
+    public void swapLens() {
+        if (this.currentLensFacing == CameraX.LensFacing.BACK) {
+            this.currentLensFacing = CameraX.LensFacing.FRONT;
+        }
+        else {
+            this.currentLensFacing = CameraX.LensFacing.BACK;
+        }
         return;
     }
 
@@ -358,8 +376,9 @@ public class Analyzer
                                                             + ", Eyes-Nose: " + eyesNoseMidpoint + "}");*/
                                                 }
                                                 else {
-                                                    Toast.makeText(activity, R.string.ask_look, Toast.LENGTH_SHORT)
-                                                            .show();
+                                                    Toast.makeText(activity,
+                                                            res.getString(R.string.ask_look, "" + currentLensFacing),
+                                                            Toast.LENGTH_SHORT).show();
                                                     clearCapturedPosition();
                                                     clearPosition();
                                                     arrowBottom.setImageResource(R.drawable.arrow);

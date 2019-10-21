@@ -5,7 +5,6 @@ import android.content.Context;
 import android.graphics.Rect;
 import android.media.Image;
 import android.os.Vibrator;
-import android.util.Log;
 import android.widget.ImageView;
 import android.widget.Toast;
 import androidx.annotation.NonNull;
@@ -31,8 +30,8 @@ public class Analyzer
     private Activity activity;
     private FirebaseVisionFaceDetector detector;
     private boolean faceDetected;
-    private ImageView faceDetection;
     private long lastAnalyzedTimestamp;
+    private ImageView smile;
 
     private Analyzer() {
         this(null);
@@ -43,7 +42,6 @@ public class Analyzer
         super();
         this.activity = activity;
         this.faceDetected = false;
-        this.faceDetection = (ImageView)this.activity.findViewById(R.id.face_detection);
         final FirebaseVisionFaceDetectorOptions options =
                 new FirebaseVisionFaceDetectorOptions.Builder()
                         .setPerformanceMode(FirebaseVisionFaceDetectorOptions.ACCURATE)
@@ -54,6 +52,7 @@ public class Analyzer
         this.detector = FirebaseVision.getInstance()
                 .getVisionFaceDetector(options);
         this.lastAnalyzedTimestamp = 0;
+        this.smile = (ImageView)this.activity.findViewById(R.id.smile);
         return;
     }
 
@@ -108,7 +107,7 @@ public class Analyzer
                                             public void onSuccess(List<FirebaseVisionFace> faces) {
                                                 // Log.i(CameraAnalyzer.TAG, "Faces: " + faces.size());
                                                 if (faces.size() > 0) {
-                                                    faceDetection.setImageResource(R.drawable.smile_green);
+                                                    smile.setImageResource(R.drawable.smile_green);
                                                     if (!faceDetected) {
                                                         vibrate(500);
                                                         faceDetected = true;
@@ -119,7 +118,7 @@ public class Analyzer
                                                     final Rect bounds = face.getBoundingBox();
                                                 }
                                                 else {
-                                                    faceDetection.setImageResource(R.drawable.smile);
+                                                    smile.setImageResource(R.drawable.smile);
                                                     Toast.makeText(activity, R.string.ask_look, Toast.LENGTH_SHORT)
                                                             .show();
                                                     faceDetected = false;

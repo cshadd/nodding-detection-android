@@ -46,7 +46,9 @@ public final class CorrectedFirebaseVisionPointWrapper {
             return false;
         }
         final CorrectedFirebaseVisionPointWrapper var2 = (CorrectedFirebaseVisionPointWrapper)var1;
-        return Objects.equal(this.getX(), var2.getX()) && Objects.equal(this.getY(), var2.getY()) && Objects.equal((Object)null, (Object)null);
+        return Objects.equal(this.getX(), var2.getX())
+                && Objects.equal(this.getY(), var2.getY())
+                && Objects.equal(this.getZ(), var2.getZ());
     }
 
     @Override
@@ -60,6 +62,9 @@ public final class CorrectedFirebaseVisionPointWrapper {
 
     @Override
     public final String toString() {
-        return zzlq.zzay("FirebaseVisionPoint (Corrected)").zzh("x", this.getX()).zzh("y", this.getY()).zzh("z", this.getZ()).toString();
+        return zzlq.zzay("FirebaseVisionPoint (Corrected)")
+                .zzh("x", this.getX())
+                .zzh("y", this.getY())
+                .zzh("z", this.getZ()).toString();
     }
 }

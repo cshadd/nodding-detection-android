@@ -21,8 +21,8 @@ import java.util.List;
 public class Analyzer {
     private static final String TAG = "KAPLAN-2";
     private static final Float THRESHOLD = 50f;
-    private static final int TIMEOUT_CLEARING = 2;
     private static final int TIMEOUT_DETECTION = 5;
+    private static final int TIMEOUT_RESET = 3;
 
     private CommonActivity activity;
     private ImageView arrowBottom;
@@ -31,8 +31,6 @@ public class Analyzer {
     private ImageView arrowTop;
     private TextView[] capPos;
     private TextView[] capPosMid;
-    private long clearingEnd;
-    private long clearingStart;
     private boolean currentPosCaptured;
     private CorrectedFirebaseVisionPointWrapper currentLeftEyePos;
     private Facing currentLensFacing;
@@ -43,13 +41,13 @@ public class Analyzer {
     private boolean faceDetected;
     private TextView[] pos;
     private TextView[] posMid;
-    private long recordedNodEnd;
     private long recordedNodStart;
-    private long recordedShakeEnd;
     private long recordedShakeStart;
     private Resources res;
+    private Task<List<FirebaseVisionFace>> result;
     private ImageView smile;
     private TextView status;
+    private boolean waitingForFace;
 
     private Analyzer() {
         this(null);
@@ -64,15 +62,11 @@ public class Analyzer {
     public Analyzer(CommonActivity activity, Facing lensFacing) {
         super();
         this.activity = activity;
-        this.clearingEnd = 0;
-        this.clearingStart = 0;
-        this.currentPosCaptured = false;
         this.currentLeftEyePos = new CorrectedFirebaseVisionPointWrapper(0f, 0f, 0f);
         this.currentLensFacing = lensFacing;
         this.currentMidpoint = new CorrectedFirebaseVisionPointWrapper(0f, 0f, 0f);
         this.currentNoseBasePos = new CorrectedFirebaseVisionPointWrapper(0f, 0f, 0f);
         this.currentRightEyePos = new CorrectedFirebaseVisionPointWrapper(0f, 0f, 0f);
-        this.faceDetected = false;
         final FirebaseVisionFaceDetectorOptions options =
                 new FirebaseVisionFaceDetectorOptions.Builder()
                         .setPerformanceMode(FirebaseVisionFaceDetectorOptions.ACCURATE)
@@ -82,38 +76,27 @@ public class Analyzer {
 
         this.detector = FirebaseVision.getInstance()
                 .getVisionFaceDetector(options);
-        this.recordedNodEnd = 0;
-        this.recordedNodStart = 0;
-        this.recordedShakeEnd = 0;
-        this.recordedShakeStart = 0;
+        this.result = null;
         return;
     }
 
-    public Task<List<FirebaseVisionFace>> analyze(FirebaseVisionImage image) {
-        final Task<List<FirebaseVisionFace>> result =
-                detector.detectInImage(image)
-                        .addOnSuccessListener(new OnSuccessListener<List<FirebaseVisionFace>>() {
-                            @Override
-                            public void onSuccess(List<FirebaseVisionFace> faces) {
-                                // Log.i(Analyzer.TAG, "Faces: " + faces.size());
-                                boolean ready = true;
-                                if (clearingStart != 0) {
-                                    clearingEnd = System.currentTimeMillis();
-                                    final float durationClearing = (clearingEnd - clearingStart) / 1000f;
-
-                                    if (durationClearing <= Analyzer.TIMEOUT_CLEARING) {
-                                        ready = false;
-                                    }
-                                }
-
-                                if (faces.size() > 0 && ready) {
+    public void analyze(FirebaseVisionImage image) {
+        this.result = detector.detectInImage(image)
+                .addOnSuccessListener(new OnSuccessListener<List<FirebaseVisionFace>>() {
+                    @Override
+                    public void onSuccess(List<FirebaseVisionFace> faces) {
+                        // Log.i(Analyzer.TAG, "Faces: " + faces.size());
+                        if (waitingForFace) {
+                            Toast.makeText(activity,
+                                    res.getString(R.string.ask_look, "" + currentLensFacing),
+                                    Toast.LENGTH_SHORT).show();
+                            clearPosition();
+                            waitingForFace = false;
+                        }
+                        else {
+                            if (faces.size() > 0) {
+                                if (faceDetected) {
                                     smile.setImageResource(R.drawable.smile_green);
-                                    if (!faceDetected) {
-                                        Toast.makeText(activity, R.string.face_detected, Toast.LENGTH_SHORT)
-                                                .show();
-                                        activity.vibrate(500);
-                                        faceDetected = true;
-                                    }
                                     final FirebaseVisionFace face = faces.get(0);
                                     final Rect bounds = face.getBoundingBox();
                                     // Log.i(Analyzer.TAG, "Bounds: " + bounds);
@@ -205,7 +188,7 @@ public class Analyzer {
                                         arrowRight.setImageResource(R.drawable.arrow_green);
 
                                         if (recordedShakeStart != 0) {
-                                            recordedShakeEnd = System.currentTimeMillis();
+                                            final long recordedShakeEnd = System.currentTimeMillis();
                                             final float durationDetection = (recordedShakeEnd - recordedShakeStart) / 1000f;
 
                                             if (durationDetection <= Analyzer.TIMEOUT_DETECTION) {
@@ -224,7 +207,7 @@ public class Analyzer {
                                         arrowTop.setImageResource(R.drawable.arrow);
 
                                         if (recordedNodStart != 0) {
-                                            recordedNodEnd = System.currentTimeMillis();
+                                            final long recordedNodEnd = System.currentTimeMillis();
                                             final float durationDetection = (recordedNodEnd - recordedNodStart) / 1000f;
 
                                             if (durationDetection <= Analyzer.TIMEOUT_DETECTION) {
@@ -243,34 +226,51 @@ public class Analyzer {
                                         arrowTop.setImageResource(R.drawable.arrow);
                                     }
 
-                                    /*Log.i(Analyzer.TAG, "Results: "
+                                    /* Log.i(Analyzer.TAG, "Results: "
                                             + "{Left Eye: " + leftEyePos
                                             + ", Nose Base: " + noseBasePos
                                             + ", Right Eye: " + rightEyePos + "}");
                                     Log.i(Analyzer.TAG, "Results (Midpoints): "
                                             + "{Eyes: " + eyesMidpoint
-                                            + ", Eyes-Nose: " + eyesNoseMidpoint + "}");*/
+                                            + ", Eyes-Nose: " + eyesNoseMidpoint + "}"); */
                                 }
                                 else {
-                                    Toast.makeText(activity,
-                                            res.getString(R.string.ask_look, "" + currentLensFacing),
-                                            Toast.LENGTH_SHORT).show();
-                                    clearCapturedPosition();
+                                    Toast.makeText(activity, R.string.face_detected, Toast.LENGTH_SHORT)
+                                            .show();
+                                    activity.vibrate(500);
+                                    clearPosition();
+                                    faceDetected = true;
                                 }
-                                return;
                             }
-                        })
-                        .addOnFailureListener(new OnFailureListener() {
-                            @Override
-                            public void onFailure(Exception e) {
-                                activity.showError(e.getMessage());
-                                return;
+                            else {
+                                waitingForFace = true;
                             }
-                        });
-        return result;
+                        }
+                        return;
+                    }
+                })
+                .addOnFailureListener(new OnFailureListener() {
+                    @Override
+                    public void onFailure(Exception e) {
+                        activity.showError(e.getMessage());
+                        return;
+                    }
+                });
+        return;
     }
 
-    public void clearCapturedPosition() {
+    public void clear() {
+        this.clearPosition();
+        this.faceDetected = false;
+        this.waitingForFace = true;
+        return;
+    }
+
+    private void clearPosition() {
+        this.arrowBottom.setImageResource(R.drawable.arrow);
+        this.arrowLeft.setImageResource(R.drawable.arrow);
+        this.arrowRight.setImageResource(R.drawable.arrow);
+        this.arrowTop.setImageResource(R.drawable.arrow);
         this.currentPosCaptured = false;
         this.currentLeftEyePos = new CorrectedFirebaseVisionPointWrapper(0f, 0f, 0f);
         this.currentMidpoint = new CorrectedFirebaseVisionPointWrapper(0f, 0f, 0f);
@@ -303,11 +303,8 @@ public class Analyzer {
                 "Z",  "~0"
         ));
 
-        this.clearPosition();
-        return;
-    }
+        this.faceDetected = false;
 
-    public void clearPosition() {
         this.pos[0].setText(res.getString(R.string.detail_position3,
                 "L. Eye X",  "~0",
                 "Nose X",  "~0",
@@ -334,19 +331,7 @@ public class Analyzer {
                 "Z",  "~0"
         ));
 
-        this.clearStatus();
-        return;
-    }
-
-    public void clearStatus() {
-        this.arrowBottom.setImageResource(R.drawable.arrow);
-        this.arrowLeft.setImageResource(R.drawable.arrow);
-        this.arrowRight.setImageResource(R.drawable.arrow);
-        this.arrowTop.setImageResource(R.drawable.arrow);
-        this.faceDetected = false;
-        this.recordedNodEnd = 0;
         this.recordedNodStart = 0;
-        this.recordedShakeEnd = 0;
         this.recordedShakeStart = 0;
         this.smile.setImageResource(R.drawable.smile);
         this.status.setText(R.string.empty);
@@ -392,7 +377,7 @@ public class Analyzer {
         this.smile = (ImageView)this.activity.findViewById(R.id.smile);
         this.status = (TextView)this.activity.findViewById(R.id.status);
 
-        this.clearPosition();
+        this.clear();
         return;
     }
 
@@ -408,8 +393,7 @@ public class Analyzer {
         else {
             this.currentLensFacing = Facing.BACK;
         }
-        this.clearCapturedPosition();
-        this.clearingStart = System.currentTimeMillis();
+        this.clear();
         return;
     }
 }

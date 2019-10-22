@@ -144,21 +144,7 @@ public class MainActivity
         final int id = item.getItemId();
         if (id == R.id.action_clear) {
             if (this.cameraControl != null) {
-                this.cameraControl.clearPosition();
-            }
-            super.vibrate(300);
-            return true;
-        }
-        else if (id == R.id.action_clear_cap) {
-            if (this.cameraControl != null) {
-                this.cameraControl.clearCapturedPosition();
-            }
-            super.vibrate(300);
-            return true;
-        }
-        else if (id == R.id.action_clear_status) {
-            if (this.cameraControl != null) {
-                this.cameraControl.clearStatus();
+                this.cameraControl.clear();
             }
             super.vibrate(300);
             return true;

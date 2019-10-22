@@ -4,9 +4,7 @@
     <string name="action_close">Close</string>
     <string name="action_settings">Settings</string>
     <string name="ask_look">Please look at your %1$s camera!</string>
-    <string name="clear">Clear Position</string>
-    <string name="clear_captured">Clear Captured Position</string>
-    <string name="clear_status">Clear Status</string>
+    <string name="clear">Clear</string>
     <string name="detail_captured_position_title">Captured Position:</string>
     <string name="detail_captured_midpoint_title">Captured Midpoint:</string>
     <string name="detail_current_position_title">Current Position:</string>

@@ -30,18 +30,8 @@ public class CameraControl {
         return;
     }
 
-    public void clearCapturedPosition() {
-        this.analyzer.clearCapturedPosition();
-        return;
-    }
-
-    public void clearPosition() {
-        this.analyzer.clearPosition();
-        return;
-    }
-
-    public void clearStatus() {
-        this.analyzer.clearStatus();
+    public void clear() {
+        this.analyzer.clear();
         return;
     }
 
